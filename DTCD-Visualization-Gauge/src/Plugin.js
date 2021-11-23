@@ -5,9 +5,16 @@ import {
   PanelPlugin,
   LogSystemAdapter,
   EventSystemAdapter,
+  StorageSystemAdapter,
 } from './../../DTCD-SDK';
 
 export class Plugin extends PanelPlugin {
+
+  #title;
+  #units;
+  #segments;
+  #dataSource;
+  #storageSystem;
 
   static getRegistrationMeta() {
     return pluginMeta;
@@ -17,7 +24,10 @@ export class Plugin extends PanelPlugin {
     super();
 
     const logSystem = new LogSystemAdapter(guid, pluginMeta.name);
-    const eventSystem = new EventSystemAdapter();
+    const eventSystem = new EventSystemAdapter(guid);
+
+    eventSystem.registerPluginInstance(this);
+    this.#storageSystem = new StorageSystemAdapter();
 
     const { default: VueJS } = this.getDependence('Vue');
 
@@ -27,38 +37,65 @@ export class Plugin extends PanelPlugin {
     }).$mount(selector);
 
     this.vueComponent = view.$children[0];
+    this.#title = '';
+    this.#units = '';
+    this.#segments = [];
+    this.#dataSource = '';
   }
 
   setPluginConfig(config = {}) {
-    const { title, value, units, segments } = config;
-    this.setTitle(title);
-    this.setValue(value);
-    this.setUnits(units);
-    this.setSegments(segments);
+    const { title, units, segments, dataSource } = config;
+
+    if (typeof title !== 'undefined') {
+      this.#title = title;
+      this.vueComponent.setTitle(title);
+    }
+
+    if (typeof units !== 'undefined') {
+      this.#units = units;
+      this.vueComponent.setUnits(units);
+    }
+
+    if (typeof segments !== 'undefined') {
+      this.#segments = segments;
+      this.vueComponent.setSegments(segments);
+    }
+
+    if (typeof dataSource !== 'undefined') {
+      this.#dataSource = dataSource;
+      const DS = this.getSystem('DataSourceSystem').getDataSource(this.#dataSource);
+      if (DS.status === 'success') {
+        const data = this.#storageSystem.session.getRecord(this.#dataSource);
+        this.loadData(data);
+      }
+    }
   }
 
   getPluginConfig() {
-    return this.vueComponent.getConfig();
+    const config = {};
+    if (typeof this.#title !== 'undefined') config.title = this.#title;
+    if (typeof this.#units !== 'undefined') config.units = this.#units;
+    if (typeof this.#segments !== 'undefined') config.segments = this.#segments;
+    if (typeof this.#dataSource !== 'undefined') config.dataSource = this.#dataSource;
+    return config;
+  }
+
+  loadData(data) {
+    if (data.length > 0) {
+      this.vueComponent.setValue(data[0].value);
+    }
+    this.vueComponent.render();
+  }
+
+  processDataSourceEvent(eventData) {
+    const { dataSource, status } = eventData;
+    this.#dataSource = dataSource;
+    const data = this.#storageSystem.session.getRecord(this.#dataSource);
+    this.loadData(data);
   }
 
   setFormSettings() {}
 
   getFormSettings() {}
-
-  setTitle(text = '') {
-    this.vueComponent.setTitle(text);
-  }
-
-  setValue(value = '') {
-    this.vueComponent.setValue(value);
-  }
-
-  setUnits(units = '') {
-    this.vueComponent.setUnits(units);
-  }
-
-  setSegments(segments = []) {
-    this.vueComponent.setSegments(segments);
-  }
 
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="gauge-container">
-    <div ref="title" class="title" v-text="title"/>
+    <div ref="title" class="title" v-text="computedTitle"/>
     <div ref="svgContainer" class="svg-container"/>
   </div>
 </template>
@@ -25,6 +25,12 @@ export default {
     value: 0,
     segments: [],
   }),
+  computed: {
+    computedTitle() {
+      const units = this.units !== '' ? `(${this.units})` : '';
+      return `${this.title} ${units}`;
+    }
+  },
   methods: {
     setTitle(text = '') {
       this.title = text;
@@ -38,19 +44,12 @@ export default {
 
     setValue(value = 0) {
       this.value = value;
-      this.calculateValueColor();
       this.render();
     },
 
     setSegments(segments = []) {
       this.segments = segments;
-      this.calculateValueColor();
       this.render();
-    },
-
-    getConfig() {
-      const { title, value, units, segments } = this;
-      return { title, value, units, segments };
     },
 
     calculateValueColor() {
@@ -60,14 +59,29 @@ export default {
           this.valueColor = color;
         }
       });
+
+      const [min, max] = this.valueRange;
+
+      if (this.value <= min) {
+        const segment = this.segments.find(s => s.range[0] === min);
+        this.valueColor = segment.color;
+      }
+
+      if (this.value >= max) {
+        const segment = this.segments.find(s => s.range[1] === max);
+        this.valueColor = segment.color;
+      }
     },
 
     render() {
-      this.clearSvgContainer();
-      this.prepareRenderData();
-      this.createSegments();
-      this.createArrow();
-      this.createTextCaptions();
+      this.$nextTick(() => {
+        this.clearSvgContainer();
+        this.prepareRenderData();
+        this.calculateValueColor();
+        this.createSegments();
+        this.createArrow();
+        this.createTextCaptions();
+      })
     },
 
     clearSvgContainer() {
@@ -87,9 +101,7 @@ export default {
       const endAngle = Math.PI / 2;
       const angles = [-endAngle, endAngle];
 
-      this.valueRange = this.segments.length <= 0
-        ? [-1, 1]
-        : d3.extent(this.segments.map(s => s.range).flat());
+      this.valueRange = d3.extent(this.segments.map(s => s.range).flat());
 
       this.radius = Math.min(width, height) / 2;
       this.radius += width > height ? 25 : - 25;
@@ -106,20 +118,40 @@ export default {
       const valRadians = this.scale(this.value);
       const valDegrees = valRadians * 180 / Math.PI;
       const halfWidth = 6;
+
+      const [minVal, maxVal] = this.valueRange;
+
+      let rotate = Number.isNaN(valDegrees) ? 0 : valDegrees;
+
+      if (this.value <= minVal) rotate = this.scale(minVal) * 180 / Math.PI;
+      if (this.value >= maxVal) rotate = this.scale(maxVal) * 180 / Math.PI;
+
       this.svg.append('path')
         .attr('class', 'arrow')
-        .attr('transform', `rotate(${valDegrees})`)
+        .attr('transform', `rotate(${rotate})`)
         .attr('d', `M0 ${-this.arrowLength} L${-halfWidth} 0 L${halfWidth} 0`);
     },
 
     createTextCaptions() {
       const { valueRange, value, arrowLength } = this;
       const [min, max] = valueRange;
+
       const textCaptions = [
         { x: 0, y: 30, text: value, className: 'cur-value' },
-        { x: arrowLength, y: 20, text: max, className: 'range-value' },
-        { x: -arrowLength, y: 20, text: min, className: 'range-value' },
-      ]
+      ];
+
+      if (typeof min === 'number') {
+        textCaptions.push({
+          x: -arrowLength, y: 20, text: min, className: 'range-value'
+        });
+      }
+
+      if (typeof max === 'number') {
+        textCaptions.push({
+          x: arrowLength, y: 20, text: max, className: 'range-value'
+        });
+      }
+
       textCaptions.forEach(c => this.addTextElement(c));
     },
 
@@ -135,7 +167,7 @@ export default {
 
     addTextElement({ x , y, text, className }) {
       const el = this.svg.append('text').attr('class', className);
-      el.attr('x', x).attr('y', y).text(text + this.units);
+      el.attr('x', x).attr('y', y).text(text);
       if (className === 'cur-value') el.attr('fill', this.valueColor);
     },
   },
