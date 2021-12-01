@@ -9,7 +9,6 @@ import {
 } from './../../DTCD-SDK';
 
 export class Plugin extends PanelPlugin {
-
   #title;
   #units;
   #segments;
@@ -23,7 +22,7 @@ export class Plugin extends PanelPlugin {
     return pluginMeta;
   }
 
-  constructor (guid, selector) {
+  constructor(guid, selector) {
     super();
 
     const logSystem = new LogSystemAdapter(guid, pluginMeta.name);
@@ -67,14 +66,14 @@ export class Plugin extends PanelPlugin {
       this.vueComponent.setSegments(segments);
     }
 
-    if (typeof dataSource !== 'undefined') {
+    if (!dataSource) {
       if (this.#dataSourceName) {
         this.#eventSystem.unsubscribe(
           this.#dataSourceSystemGUID,
           'DataSourceStatusUpdate',
           this.#guid,
           'processDataSourceEvent',
-          { dataSource: this.#dataSourceName, status: 'success' },
+          { dataSource: this.#dataSourceName, status: 'success' }
         );
       }
 
@@ -89,7 +88,7 @@ export class Plugin extends PanelPlugin {
       );
 
       const DS = this.getSystem('DataSourceSystem').getDataSource(this.#dataSourceName);
-      if (DS.status === 'success') {
+      if (DS && DS.status === 'success') {
         const data = this.#storageSystem.session.getRecord(this.#dataSourceName);
         this.loadData(data);
       }
@@ -122,5 +121,4 @@ export class Plugin extends PanelPlugin {
   setFormSettings() {}
 
   getFormSettings() {}
-
 }
