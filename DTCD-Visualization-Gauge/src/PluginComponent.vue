@@ -1,14 +1,14 @@
 <template>
   <div class="gauge-container">
-    <div ref="title" class="title" v-text="computedTitle"/>
-    <div ref="svgContainer" class="svg-container"/>
+    <div ref="title" class="title" v-text="computedTitle" />
+    <div ref="svgContainer" class="svg-container" />
   </div>
 </template>
 
 <script>
 export default {
   name: 'PluginComponent',
-  data: (self) => ({
+  data: self => ({
     logSystem: self.$root.logSystem,
     eventSystem: self.$root.eventSystem,
     /** Gauge technical data. */
@@ -29,7 +29,7 @@ export default {
     computedTitle() {
       const units = this.units !== '' ? `(${this.units})` : '';
       return `${this.title} ${units}`;
-    }
+    },
   },
   methods: {
     setTitle(text = '') {
@@ -81,7 +81,7 @@ export default {
         this.createSegments();
         this.createArrow();
         this.createTextCaptions();
-      })
+      });
     },
 
     clearSvgContainer() {
@@ -92,11 +92,12 @@ export default {
       const { svgContainer } = this.$refs;
       const { offsetWidth: width, offsetHeight: height } = svgContainer;
 
-      this.svg = d3.select(svgContainer)
+      this.svg = d3
+        .select(svgContainer)
         .append('svg')
         .attr('class', 'content')
         .append('g')
-        .attr('transform', `translate(${width / 2}, ${height / 2 * 1.5})`);
+        .attr('transform', `translate(${width / 2}, ${(height / 2) * 1.5})`);
 
       const endAngle = Math.PI / 2;
       const angles = [-endAngle, endAngle];
@@ -104,9 +105,9 @@ export default {
       this.valueRange = d3.extent(this.segments.map(s => s.range).flat());
 
       this.radius = Math.min(width, height) / 2;
-      this.radius += width > height ? 25 : - 25;
+      this.radius += width > height ? 25 : -25;
 
-      this.arrowLength = this.radius - (this.segmentWidth / 2);
+      this.arrowLength = this.radius - this.segmentWidth / 2;
       this.scale = d3.scaleLinear().range(angles).domain(this.valueRange);
     },
 
@@ -116,17 +117,18 @@ export default {
 
     createArrow() {
       const valRadians = this.scale(this.value);
-      const valDegrees = valRadians * 180 / Math.PI;
+      const valDegrees = (valRadians * 180) / Math.PI;
       const halfWidth = 6;
 
       const [minVal, maxVal] = this.valueRange;
 
       let rotate = Number.isNaN(valDegrees) ? 0 : valDegrees;
 
-      if (this.value <= minVal) rotate = this.scale(minVal) * 180 / Math.PI;
-      if (this.value >= maxVal) rotate = this.scale(maxVal) * 180 / Math.PI;
+      if (this.value <= minVal) rotate = (this.scale(minVal) * 180) / Math.PI;
+      if (this.value >= maxVal) rotate = (this.scale(maxVal) * 180) / Math.PI;
 
-      this.svg.append('path')
+      this.svg
+        .append('path')
         .attr('class', 'arrow')
         .attr('transform', `rotate(${rotate})`)
         .attr('d', `M0 ${-this.arrowLength} L${-halfWidth} 0 L${halfWidth} 0`);
@@ -136,19 +138,23 @@ export default {
       const { valueRange, value, arrowLength } = this;
       const [min, max] = valueRange;
 
-      const textCaptions = [
-        { x: 0, y: 30, text: value, className: 'cur-value' },
-      ];
+      const textCaptions = [{ x: 0, y: 30, text: value, className: 'cur-value' }];
 
       if (typeof min === 'number') {
         textCaptions.push({
-          x: -arrowLength, y: 20, text: min, className: 'range-value'
+          x: -arrowLength,
+          y: 20,
+          text: min,
+          className: 'range-value',
         });
       }
 
       if (typeof max === 'number') {
         textCaptions.push({
-          x: arrowLength, y: 20, text: max, className: 'range-value'
+          x: arrowLength,
+          y: 20,
+          text: max,
+          className: 'range-value',
         });
       }
 
@@ -157,7 +163,8 @@ export default {
 
     addSegment({ range, color }) {
       const [start, end] = range;
-      const arc = d3.arc()
+      const arc = d3
+        .arc()
         .outerRadius(this.radius)
         .innerRadius(this.radius - this.segmentWidth)
         .startAngle(this.scale(start))
@@ -165,13 +172,12 @@ export default {
       this.svg.append('path').attr('fill', color).attr('d', arc);
     },
 
-    addTextElement({ x , y, text, className }) {
+    addTextElement({ x, y, text, className }) {
       const el = this.svg.append('text').attr('class', className);
       el.attr('x', x).attr('y', y).text(text);
       if (className === 'cur-value') el.attr('fill', this.valueColor);
     },
   },
-
 };
 </script>
 
