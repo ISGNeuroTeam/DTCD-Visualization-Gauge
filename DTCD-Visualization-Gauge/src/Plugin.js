@@ -104,7 +104,6 @@ export class Plugin extends PanelPlugin {
     if (typeof this.#units !== 'undefined') config.units = this.#units;
     if (typeof this.#segments !== 'undefined') config.segments = this.#segments;
     if (typeof this.#dataSourceName !== 'undefined') config.dataSource = this.#dataSourceName;
-    console.log(config);
     return config;
   }
 
@@ -157,36 +156,17 @@ export class Plugin extends PanelPlugin {
           },
         },
         {
-          component: 'checkbox',
-          propName: 'showName',
-          propValue: true,
-          attrs: {
-            title: 'Показать имя компонента',
-            'title-position': 'right',
-          },
-        },
-        {
-          component: 'checkbox',
-          title: 'Показать имя компонента',
-          'title-position': 'right',
-          propName: 'showBackground',
-          propValue: false,
-        },
-        {
           component: 'divider',
           style: 'border-bottom: 1px solid gray;height:10px',
         },
         {
-          component: 'select',
+          component: 'datasource',
           propName: 'dataSource',
           attrs: {
             label: 'Выберите источник данных',
             placeholder: 'Выберите значение',
             required: true,
           },
-          options: Object.keys(this.#dataSourceSystem.getDataSourceList()).map(name => ({
-            value: name,
-          })),
         },
         {
           component: 'title',
@@ -212,95 +192,8 @@ export class Plugin extends PanelPlugin {
           propValue: 'Введите диапазон',
         },
         {
-          component: 'array',
+          component: 'gauge-segments',
           propName: 'segments',
-          attrs: {
-            style: 'width:100%;display:flex;justify-content:space-around',
-          },
-          fields: [
-            {
-              propName: 0,
-              component: 'object',
-              fields: [
-                {
-                  propName: 'range',
-                  component: 'array',
-                  fields: [
-                    {
-                      propName: 0,
-                      component: 'text',
-                      attrs: {
-                        type: 'number',
-                        label: '<span style="color:red">*</span>range1-start',
-                        required: true,
-                        style: 'width:100px',
-                      },
-                    },
-                    {
-                      propName: 1,
-                      component: 'text',
-                      attrs: {
-                        type: 'number',
-                        label: '<span style="color:red">*</span>range1-end',
-                        required: true,
-                        style: 'width:100px',
-                      },
-                    },
-                  ],
-                },
-                {
-                  propName: 'color',
-                  component: 'text',
-                  attrs: {
-                    label: '<span style="color:red">*</span>range1-color',
-                    required: true,
-                    style: 'width:100px',
-                  },
-                },
-              ],
-            },
-            {
-              component: 'object',
-              propName: 1,
-              fields: [
-                {
-                  propName: 'range',
-                  component: 'array',
-                  fields: [
-                    {
-                      propName: 0,
-                      component: 'text',
-                      attrs: {
-                        type: 'number',
-                        label: '<span style="color:red">*</span>range2-start',
-                        required: true,
-                        style: 'width:100px',
-                      },
-                    },
-                    {
-                      propName: 1,
-                      component: 'text',
-                      attrs: {
-                        type: 'number',
-                        label: '<span style="color:red">*</span>range2-end',
-                        required: true,
-                        style: 'width:100px',
-                      },
-                    },
-                  ],
-                },
-                {
-                  propName: 'color',
-                  component: 'text',
-                  attrs: {
-                    label: '<span style="color:red">*</span>range2-color',
-                    required: true,
-                    style: 'width:100px',
-                  },
-                },
-              ],
-            },
-          ],
         },
       ],
     };
