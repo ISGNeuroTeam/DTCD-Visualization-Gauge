@@ -9,7 +9,7 @@ import {
   DataSourceSystemAdapter,
 } from './../../DTCD-SDK';
 
-export class Plugin extends PanelPlugin {
+export class VisualizationGauge extends PanelPlugin {
   #title;
   #units;
   #segments;
@@ -129,35 +129,21 @@ export class Plugin extends PanelPlugin {
     return {
       fields: [
         {
-          component: 'title',
-          propValue: 'Общие настройки',
-        },
-        {
           component: 'text',
           propName: 'title',
           attrs: {
-            label: 'Название компонента',
+            label: 'Заголовок',
             placeholder: 'Компонент 1',
             hint: 'name: "Компонент-1"',
-            required: true,
           },
         },
         {
-          component: 'subtitle',
-          propValue: 'Описание компонента',
-        },
-        {
-          component: 'textarea',
-          propName: 'description',
+          component: 'text',
+          propName: 'units',
           attrs: {
-            type: 'textarea',
-            rows: 5,
-            placeholder: 'Показатели увеличения рыночной цены перевозки груза...',
+            label: 'Единицы измерения',
+            value: 'млн. рублей',
           },
-        },
-        {
-          component: 'divider',
-          style: 'border-bottom: 1px solid gray;height:10px',
         },
         {
           component: 'datasource',
@@ -170,26 +156,7 @@ export class Plugin extends PanelPlugin {
         },
         {
           component: 'title',
-          propValue: 'Единицы измерения',
-        },
-        {
-          component: 'subtitle',
-          propValue: 'Введите значение',
-        },
-        {
-          component: 'text',
-          propName: 'units',
-          attrs: {
-            value: 'млн. рублей',
-          },
-        },
-        {
-          component: 'title',
           propValue: 'Диапазон данных',
-        },
-        {
-          component: 'subtitle',
-          propValue: 'Введите диапазон',
         },
         {
           component: 'gauge-segments',
