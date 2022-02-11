@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- version of core systems for adapters
+
+### Changed
+- build process in order to make directory name with current version of plugin
+
 ### Fixed
 - correct visualization display when the container size is `N x N`
 
