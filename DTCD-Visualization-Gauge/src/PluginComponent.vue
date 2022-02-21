@@ -1,6 +1,6 @@
 <template>
-  <div class="gauge-container">
-    <div ref="title" class="title" v-text="computedTitle" />
+  <div ref="mainContainer" class="gauge-container">
+    <div class="title" v-text="computedTitle" />
     <div ref="svgContainer" class="svg-container" />
   </div>
 </template>
@@ -27,8 +27,8 @@ export default {
   }),
   computed: {
     computedTitle() {
-      const units = this.units !== '' ? `(${this.units})` : '';
-      return `${this.title} ${units}`;
+      const units = this.units !== '' ? ` (${this.units})` : '';
+      return this.title + units;
     },
   },
   methods: {
@@ -89,15 +89,26 @@ export default {
     },
 
     prepareRenderData() {
-      const { svgContainer } = this.$refs;
-      const { offsetWidth: width, offsetHeight: height } = svgContainer;
+      const { mainContainer, svgContainer } = this.$refs;
+      const sizeCutting = this.computedTitle.length <= 0 ? 70 : 50;
+      const isContainerSizesEqual = mainContainer.offsetWidth === mainContainer.offsetHeight;
+
+      let { offsetWidth: width, offsetHeight: height } = svgContainer;
+
+      if (isContainerSizesEqual) {
+        width -= sizeCutting;
+        height -= sizeCutting;
+      }
+
+      const translateWidth = isContainerSizesEqual ? width + sizeCutting : width;
+      const translateHeight = isContainerSizesEqual ? height + sizeCutting : height;
 
       this.svg = d3
         .select(svgContainer)
         .append('svg')
         .attr('class', 'content')
         .append('g')
-        .attr('transform', `translate(${width / 2}, ${(height / 2) * 1.5})`);
+        .attr('transform', `translate(${translateWidth / 2}, ${(translateHeight / 2) * 1.5})`);
 
       const endAngle = Math.PI / 2;
       const angles = [-endAngle, endAngle];
