@@ -1,37 +1,56 @@
 <template>
-  <div ref="mainContainer" class="gauge-container">
+  <div ref="mainContainer" class="VisualizationGauge">
     <div class="title" v-text="computedTitle" />
-    <div ref="svgContainer" class="svg-container" />
+    <div v-if="value === null" class="NoData">
+      <span class="FontIcon name_infoCircleOutline Icon"></span>
+       Нет данных для отображения
+    </div>
+    <div v-show="value" ref="svgContainer" class="svg-container"/>
   </div>
 </template>
 
 <script>
 export default {
   name: 'PluginComponent',
-  data: self => ({
-    logSystem: self.$root.logSystem,
-    eventSystem: self.$root.eventSystem,
+  data: () => ({
     /** Gauge technical data. */
     svg: null,
     radius: 0,
     scale: [],
     valueColor: '',
     valueRange: [],
+    dataAttr: '',
     arrowLength: 0,
     segmentWidth: 30,
     /** Gauge user data. */
     title: '',
     units: '',
-    value: 0,
+    colValue: 'value',
     segments: [],
+    dataset: [],
   }),
   computed: {
     computedTitle() {
       const units = this.units !== '' ? ` (${this.units})` : '';
       return this.title + units;
     },
+
+    value() {
+      if (this.dataset.length < 1) return null;
+      const value = this.dataset[0][this.colValue];
+      return typeof value === 'undefined' ? null : value;
+    },
+  },
+  mounted() {
+    const { svgContainer } = this.$refs;
+    const attrs = svgContainer.getAttributeNames();
+    this.dataAttr = attrs.find(attr => attr.startsWith('data-'));
   },
   methods: {
+    setConfigProp(prop, value) {
+      this[prop] = value;
+    },
+
     setTitle(text = '') {
       this.title = text;
       this.render();
@@ -42,13 +61,18 @@ export default {
       this.render();
     },
 
-    setValue(value = 0) {
-      this.value = value;
+    setColValue(col = 'value') {
+      this.colValue = col;
       this.render();
     },
 
     setSegments(segments = []) {
       this.segments = segments;
+      this.render();
+    },
+
+    setDataset(data = []) {
+      this.dataset = data;
       this.render();
     },
 
@@ -106,6 +130,7 @@ export default {
       this.svg = d3
         .select(svgContainer)
         .append('svg')
+        .attr(this.dataAttr, '')
         .attr('class', 'content')
         .append('g')
         .attr('transform', `translate(${translateWidth / 2}, ${(translateHeight / 2) * 1.5})`);
@@ -140,6 +165,7 @@ export default {
 
       this.svg
         .append('path')
+        .attr(this.dataAttr, '')
         .attr('class', 'arrow')
         .attr('transform', `rotate(${rotate})`)
         .attr('d', `M0 ${-this.arrowLength} L${-halfWidth} 0 L${halfWidth} 0`);
@@ -184,7 +210,10 @@ export default {
     },
 
     addTextElement({ x, y, text, className }) {
-      const el = this.svg.append('text').attr('class', className);
+      const el = this.svg
+        .append('text')
+        .attr(this.dataAttr, '')
+        .attr('class', className);
       el.attr('x', x).attr('y', y).text(text);
       if (className === 'cur-value') el.attr('fill', this.valueColor);
     },
@@ -192,6 +221,58 @@ export default {
 };
 </script>
 
-<style lang="sass">
-@import ./styles/component
+<style lang="sass" scoped>
+*
+  box-sizing: border-box
+  margin: 0
+  padding: 0
+
+.VisualizationGauge
+  width: 100%
+  height: 100%
+  display: flex
+  flex-direction: column
+  font-family: 'Proxima Nova'
+
+  .NoData
+    flex-grow: 1
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-direction: column
+    color: var(--text_secondary)
+
+    .Icon
+      color: var(--border_secondary)
+      font-size: 100px
+      margin-bottom: 8px
+
+  .title
+    max-height: 60px
+    padding: 10px 16px 0
+    color: var(--text_main)
+    font-size: 18px
+    font-weight: 700
+    line-height: 23px
+    overflow: auto
+
+  .svg-container
+    flex-grow: 1
+    overflow: hidden
+
+    .content
+      width: 100%
+      height: 100%
+
+      .arrow
+        fill: var(--title)
+
+      .cur-value, .range-value
+        font-size: 22px
+        font-weight: 700
+        text-anchor: middle
+
+      .range-value
+        fill: var(--text_main)
+        font-size: 18px
 </style>
