@@ -11,15 +11,22 @@ import {
 
 export class VisualizationGauge extends PanelPlugin {
 
-  #title;
-  #units;
-  #segments;
-  #dataSourceName;
-  #storageSystem;
+  #id;
   #guid;
+  #logSystem;
   #eventSystem;
+  #storageSystem;
   #dataSourceSystem;
   #dataSourceSystemGUID;
+  #vueComponent;
+
+  #config = {
+    title: '',
+    units: '',
+    colValue: 'value',
+    segments: [],
+    dataSource: '',
+  };
 
   static getRegistrationMeta() {
     return pluginMeta;
@@ -28,12 +35,11 @@ export class VisualizationGauge extends PanelPlugin {
   constructor(guid, selector) {
     super();
 
-    const logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
-    const eventSystem = new EventSystemAdapter('0.4.0', guid);
-
-    eventSystem.registerPluginInstance(this);
     this.#guid = guid;
-    this.#eventSystem = eventSystem;
+    this.#id = `${pluginMeta.name}[${guid}]`;
+    this.#logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
+    this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
+    this.#eventSystem.registerPluginInstance(this);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.2.0');
 
@@ -44,85 +50,84 @@ export class VisualizationGauge extends PanelPlugin {
     const { default: VueJS } = this.getDependence('Vue');
 
     const view = new VueJS({
-      data: () => ({ guid, logSystem, eventSystem }),
+      data: () => ({}),
       render: h => h(PluginComponent),
     }).$mount(selector);
 
-    this.vueComponent = view.$children[0];
-    this.#title = '';
-    this.#units = '';
-    this.#segments = [];
-    this.#dataSourceName = '';
+    this.#vueComponent = view.$children[0];
+    this.#logSystem.debug(`${this.#id} initialization complete`);
+    this.#logSystem.info(`${this.#id} initialization complete`);
   }
 
   setPluginConfig(config = {}) {
-    const { title, units, segments, dataSource } = config;
+    this.#logSystem.debug(`Set new config to ${this.#id}`);
+    this.#logSystem.info(`Set new config to ${this.#id}`);
 
-    if (typeof title !== 'undefined') {
-      this.#title = title;
-      this.vueComponent.setTitle(title);
-    }
+    const configProps = Object.keys(this.#config);
 
-    if (typeof units !== 'undefined') {
-      this.#units = units;
-      this.vueComponent.setUnits(units);
-    }
+    for (const [prop, value] of Object.entries(config)) {
+      if (!configProps.includes(prop)) continue;
 
-    if (typeof segments !== 'undefined') {
-      this.#segments = segments;
-      this.vueComponent.setSegments(segments);
-    }
+      if (prop === 'title') this.#vueComponent.setTitle(value);
+      if (prop === 'units') this.#vueComponent.setUnits(value);
+      if (prop === 'segments') this.#vueComponent.setSegments(value);
+      if (prop === 'colValue') this.#vueComponent.setColValue(value);
 
-    if (dataSource) {
-      if (this.#dataSourceName) {
-        this.#eventSystem.unsubscribe(
+      if (prop === 'dataSource' && value) {
+        if (this.#config[prop]) {
+          this.#logSystem.debug(
+            `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
+          );
+          this.#eventSystem.unsubscribe(
+            this.#dataSourceSystemGUID,
+            'DataSourceStatusUpdate',
+            this.#guid,
+            'processDataSourceEvent',
+            { dataSource: this.#config[prop], status: 'success' },
+            );
+          }
+
+        const dsNewName = value;
+
+        this.#logSystem.debug(
+          `Subscribing ${this.#id} for DataSourceStatusUpdate({ dataSource: ${dsNewName}, status: success })`
+        );
+
+        this.#eventSystem.subscribe(
           this.#dataSourceSystemGUID,
           'DataSourceStatusUpdate',
           this.#guid,
           'processDataSourceEvent',
-          { dataSource: this.#dataSourceName, status: 'success' }
+          { dataSource: dsNewName, status: 'success' },
         );
+
+        const ds = this.#dataSourceSystem.getDataSource(dsNewName);
+
+        if (ds && ds.status === 'success') {
+          const data = this.#storageSystem.session.getRecord(dsNewName);
+          this.loadData(data);
+        }
       }
 
-      this.#dataSourceName = dataSource;
-
-      this.#eventSystem.subscribe(
-        this.#dataSourceSystemGUID,
-        'DataSourceStatusUpdate',
-        this.#guid,
-        'processDataSourceEvent',
-        { dataSource, status: 'success' }
-      );
-
-      const DS = this.#dataSourceSystem.getDataSource(this.#dataSourceName);
-
-      if (DS && DS.status === 'success') {
-        const data = this.#storageSystem.session.getRecord(this.#dataSourceName);
-        this.loadData(data);
-      }
+      this.#config[prop] = value;
+      this.#logSystem.debug(`${this.#id} config prop value "${prop}" set to "${value}"`);
     }
   }
 
   getPluginConfig() {
-    const config = {};
-    if (typeof this.#title !== 'undefined') config.title = this.#title;
-    if (typeof this.#units !== 'undefined') config.units = this.#units;
-    if (typeof this.#segments !== 'undefined') config.segments = this.#segments;
-    if (typeof this.#dataSourceName !== 'undefined') config.dataSource = this.#dataSourceName;
-    return config;
+    return { ...this.#config, segmnets: [...this.#config.segments] };
   }
 
   loadData(data) {
-    if (data.length > 0) {
-      this.vueComponent.setValue(data[0].value);
-    }
-    this.vueComponent.render();
+    this.#vueComponent.setDataset(data);
   }
 
   processDataSourceEvent(eventData) {
     const { dataSource, status } = eventData;
-    this.#dataSourceName = dataSource;
-    const data = this.#storageSystem.session.getRecord(this.#dataSourceName);
+    const data = this.#storageSystem.session.getRecord(dataSource);
+    this.#logSystem.debug(
+      `${this.#id} process DataSourceStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
+    );
     this.loadData(data);
   }
 
@@ -134,21 +139,8 @@ export class VisualizationGauge extends PanelPlugin {
     return {
       fields: [
         {
-          component: 'text',
-          propName: 'title',
-          attrs: {
-            label: 'Заголовок',
-            placeholder: 'Компонент 1',
-            hint: 'name: "Компонент-1"',
-          },
-        },
-        {
-          component: 'text',
-          propName: 'units',
-          attrs: {
-            label: 'Единицы измерения',
-            value: 'млн. рублей',
-          },
+          component: 'title',
+          propValue: 'Общие настройки',
         },
         {
           component: 'datasource',
@@ -157,6 +149,27 @@ export class VisualizationGauge extends PanelPlugin {
             label: 'Выберите источник данных',
             placeholder: 'Выберите значение',
             required: true,
+          },
+        },
+        {
+          component: 'text',
+          propName: 'title',
+          attrs: {
+            label: 'Заголовок',
+          },
+        },
+        {
+          component: 'text',
+          propName: 'units',
+          attrs: {
+            label: 'Единицы измерения',
+          },
+        },
+        {
+          component: 'text',
+          propName: 'colValue',
+          attrs: {
+            label: 'Имя колонки со значением',
           },
         },
         {
