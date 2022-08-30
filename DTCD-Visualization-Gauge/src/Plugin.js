@@ -4,6 +4,7 @@ import PluginComponent from './PluginComponent.vue';
 import {
   PanelPlugin,
   LogSystemAdapter,
+  NotificationSystemAdapter,
   EventSystemAdapter,
   StorageSystemAdapter,
   DataSourceSystemAdapter,
@@ -18,6 +19,7 @@ export class VisualizationGauge extends PanelPlugin {
   #storageSystem;
   #dataSourceSystem;
   #dataSourceSystemGUID;
+  #notificationSystem;
   #vueComponent;
 
   #config = {
@@ -42,6 +44,7 @@ export class VisualizationGauge extends PanelPlugin {
     this.#eventSystem.registerPluginInstance(this);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.2.0');
+    this.#notificationSystem = new NotificationSystemAdapter('0.1.0', guid, pluginMeta.name);
 
     this.#dataSourceSystemGUID = this.getGUID(
       this.getSystem('DataSourceSystem', '0.2.0')
@@ -52,6 +55,11 @@ export class VisualizationGauge extends PanelPlugin {
     const view = new VueJS({
       data: () => ({}),
       render: h => h(PluginComponent),
+      methods: {
+        createNotification: (title, body, options) => {
+          this.#notificationSystem.create(title, body, options);
+        }
+      },
     }).$mount(selector);
 
     this.#vueComponent = view.$children[0];

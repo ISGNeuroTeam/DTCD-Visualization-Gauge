@@ -12,7 +12,9 @@
 <script>
 export default {
   name: 'PluginComponent',
-  data: () => ({
+  data: ({ $root }) => ({
+    notificationSystem: $root.notificationSystem,
+    guid: $root.guid,
     /** Gauge technical data. */
     svg: null,
     radius: 0,
@@ -94,6 +96,18 @@ export default {
       if (this.value >= max) {
         const segment = this.segments.find(s => s.range[1] === max);
         this.valueColor = segment.color;
+      }
+
+      if (this.value < min || this.value > max) {
+        this.$root.createNotification(
+          `Gauge: ${this.guid}`,
+          'The value is outside the boundaries',
+          {
+            floatMode: true,
+            tag: `${this.guid}-outside-value`,
+            type: 'warning',
+          }
+        )
       }
     },
 
