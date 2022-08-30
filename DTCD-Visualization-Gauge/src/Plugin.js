@@ -53,7 +53,9 @@ export class VisualizationGauge extends PanelPlugin {
     const { default: VueJS } = this.getDependence('Vue');
 
     const view = new VueJS({
-      data: () => ({}),
+      data: () => ({
+        guid: this.#guid,
+      }),
       render: h => h(PluginComponent),
       methods: {
         createNotification: (title, body, options) => {
