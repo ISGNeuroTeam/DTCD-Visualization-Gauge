@@ -206,7 +206,12 @@ export default {
         .innerRadius(this.radius - this.segmentWidth)
         .startAngle(this.scale(start))
         .endAngle(this.scale(end));
-      this.svg.append('path').attr('fill', color).attr('d', arc);
+      this.svg.append('path')
+        .attr('fill', color)
+        .attr('d', arc)
+        .on('click', () => {
+          this.$root.publishEventClicked({ range, color })
+        });
     },
 
     addTextElement({ x, y, text, className }) {
@@ -232,7 +237,7 @@ export default {
   height: 100%
   display: flex
   flex-direction: column
-  font-family: 'Proxima Nova'
+  font-family: 'Proxima Nova', serif
 
   .NoData
     flex-grow: 1

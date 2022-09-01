@@ -39,7 +39,7 @@ export class VisualizationGauge extends PanelPlugin {
     this.#id = `${pluginMeta.name}[${guid}]`;
     this.#logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
     this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
-    this.#eventSystem.registerPluginInstance(this);
+    this.#eventSystem.registerPluginInstance(this, ['Clicked']);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.2.0');
 
@@ -52,6 +52,14 @@ export class VisualizationGauge extends PanelPlugin {
     const view = new VueJS({
       data: () => ({}),
       render: h => h(PluginComponent),
+      methods: {
+        createNotification: (title, body, options) => {
+          this.#notificationSystem.create(title, body, options);
+        },
+        publishEventClicked: (value) => {
+          this.#eventSystem.publishEvent('Clicked', value);
+        }
+      },
     }).$mount(selector);
 
     this.#vueComponent = view.$children[0];
