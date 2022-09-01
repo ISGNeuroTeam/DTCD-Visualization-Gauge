@@ -98,7 +98,7 @@ export default {
         this.valueColor = segment.color;
       }
 
-      if (this.value < min || this.value > max) {
+      if (Number.isFinite(this.value) && (this.value < min || this.value > max)) {
         this.$root.createNotification(
           `Gauge: ${this.guid}`,
           'The value is outside the boundaries',
