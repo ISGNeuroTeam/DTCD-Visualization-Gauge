@@ -53,9 +53,6 @@ export class VisualizationGauge extends PanelPlugin {
       data: () => ({}),
       render: h => h(PluginComponent),
       methods: {
-        createNotification: (title, body, options) => {
-          this.#notificationSystem.create(title, body, options);
-        },
         publishEventClicked: (value) => {
           this.#eventSystem.publishEvent('Clicked', value);
         }
