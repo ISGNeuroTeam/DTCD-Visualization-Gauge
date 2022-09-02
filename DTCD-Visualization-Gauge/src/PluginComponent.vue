@@ -101,7 +101,7 @@ export default {
       if (Number.isFinite(this.value) && (this.value < min || this.value > max)) {
         this.$root.createNotification(
           `Gauge: ${this.guid}`,
-          'The value is outside the boundaries',
+          'Значение вышло за пределы шкалы',
           {
             floatMode: true,
             tag: `${this.guid}-outside-value`,
