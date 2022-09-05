@@ -98,7 +98,8 @@ export default {
         this.valueColor = segment.color;
       }
 
-      if (Number.isFinite(this.value) && (this.value < min || this.value > max)) {
+      const floatValue = Number.parseFloat(this.value);
+      if (!isNaN(floatValue) && (floatValue < min || floatValue > max)) {
         this.$root.createNotification(
           `Gauge: ${this.guid}`,
           'Значение вышло за пределы шкалы',
