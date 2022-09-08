@@ -28,6 +28,10 @@ export default {
     colValue: 'value',
     segments: [],
     dataset: [],
+    panelSize: {
+      height:200,
+      width:200
+    },
   }),
   computed: {
     computedTitle() {
@@ -43,14 +47,25 @@ export default {
   },
   mounted() {
     const { svgContainer } = this.$refs;
+    const rect = svgContainer.getBoundingClientRect()
+    this.panelSize =  {
+      width: rect.width,
+      height: rect.height,
+    }
     const attrs = svgContainer.getAttributeNames();
     this.dataAttr = attrs.find(attr => attr.startsWith('data-'));
   },
-  methods: {
-    setConfigProp(prop, value) {
-      this[prop] = value;
+  watch: {
+    panelSize: {
+      deep: true,
+      handler(val, old) {
+        if (JSON.stringify(val) !== JSON.stringify(old)) {
+          this.render()
+        }
+      },
     },
-
+  },
+  methods: {
     setTitle(text = '') {
       this.title = text;
       this.render();
@@ -70,7 +85,9 @@ export default {
       this.segments = segments;
       this.render();
     },
-
+    setPanelSize(panelSize) {
+      this.panelSize = panelSize
+    },
     setDataset(data = []) {
       this.dataset = data;
       this.render();
@@ -115,9 +132,9 @@ export default {
     prepareRenderData() {
       const { mainContainer, svgContainer } = this.$refs;
       const sizeCutting = this.computedTitle.length <= 0 ? 70 : 50;
-      const isContainerSizesEqual = mainContainer.offsetWidth === mainContainer.offsetHeight;
 
-      let { offsetWidth: width, offsetHeight: height } = svgContainer;
+      let { width, height } = this.panelSize;
+      const isContainerSizesEqual = width === height;
 
       if (isContainerSizesEqual) {
         width -= sizeCutting;
@@ -126,7 +143,6 @@ export default {
 
       const translateWidth = isContainerSizesEqual ? width + sizeCutting : width;
       const translateHeight = isContainerSizesEqual ? height + sizeCutting : height;
-
       this.svg = d3
         .select(svgContainer)
         .append('svg')
@@ -141,7 +157,6 @@ export default {
       this.valueRange = d3.extent(this.segments.map(s => s.range).flat());
 
       this.radius = Math.min(width, height) / 2;
-      this.radius += width > height ? 25 : -25;
 
       this.arrowLength = this.radius - this.segmentWidth / 2;
       this.scale = d3.scaleLinear().range(angles).domain(this.valueRange);
