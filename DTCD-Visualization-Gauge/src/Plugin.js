@@ -7,7 +7,7 @@ import {
   EventSystemAdapter,
   StorageSystemAdapter,
   DataSourceSystemAdapter,
-} from './../../DTCD-SDK';
+} from '../../DTCD-SDK';
 
 export class VisualizationGauge extends PanelPlugin {
 
@@ -21,7 +21,7 @@ export class VisualizationGauge extends PanelPlugin {
   #vueComponent;
 
   #config = {
-    title: '',
+    ...this.defaultConfig,
     units: '',
     colValue: 'value',
     segments: [],
@@ -55,8 +55,20 @@ export class VisualizationGauge extends PanelPlugin {
     }).$mount(selector);
 
     this.#vueComponent = view.$children[0];
+
+    this.setResizeObserver(this.#vueComponent.$el, this.#vueComponent.setPanelSize)
+
     this.#logSystem.debug(`${this.#id} initialization complete`);
     this.#logSystem.info(`${this.#id} initialization complete`);
+  }
+
+  setVueComponentPropValue(prop, value) {
+    const methodName = `set${prop.charAt(0).toUpperCase() + prop.slice(1)}`;
+    if (this.#vueComponent[methodName]) {
+      this.#vueComponent[methodName](value)
+    } else {
+      throw new Error(`В компоненте отсутствует метод ${methodName} для присвоения свойства ${prop}`)
+    }
   }
 
   setPluginConfig(config = {}) {
@@ -67,13 +79,9 @@ export class VisualizationGauge extends PanelPlugin {
 
     for (const [prop, value] of Object.entries(config)) {
       if (!configProps.includes(prop)) continue;
-
-      if (prop === 'title') this.#vueComponent.setTitle(value);
-      if (prop === 'units') this.#vueComponent.setUnits(value);
-      if (prop === 'segments') this.#vueComponent.setSegments(value);
-      if (prop === 'colValue') this.#vueComponent.setColValue(value);
-
-      if (prop === 'dataSource' && value) {
+      if (prop !== 'dataSource') {
+        this.setVueComponentPropValue(prop, value)
+      } else if (value) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
             `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
@@ -151,13 +159,7 @@ export class VisualizationGauge extends PanelPlugin {
             required: true,
           },
         },
-        {
-          component: 'text',
-          propName: 'title',
-          attrs: {
-            label: 'Заголовок',
-          },
-        },
+        ...this.defaultFields,
         {
           component: 'text',
           propName: 'units',
