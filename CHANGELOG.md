@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - scaling on panel resize
+- click event when clicking on the gauge segment
 
 ## Changed
 - version of DTCD-SDK
