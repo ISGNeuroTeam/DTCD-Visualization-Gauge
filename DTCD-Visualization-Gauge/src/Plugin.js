@@ -8,10 +8,9 @@ import {
   EventSystemAdapter,
   StorageSystemAdapter,
   DataSourceSystemAdapter,
-} from './../../DTCD-SDK';
+} from '../../DTCD-SDK';
 
 export class VisualizationGauge extends PanelPlugin {
-
   #id;
   #guid;
   #logSystem;
@@ -23,7 +22,7 @@ export class VisualizationGauge extends PanelPlugin {
   #vueComponent;
 
   #config = {
-    title: '',
+    ...this.defaultConfig,
     units: '',
     colValue: 'value',
     segments: [],
@@ -41,14 +40,12 @@ export class VisualizationGauge extends PanelPlugin {
     this.#id = `${pluginMeta.name}[${guid}]`;
     this.#logSystem = new LogSystemAdapter('0.5.0', guid, pluginMeta.name);
     this.#eventSystem = new EventSystemAdapter('0.4.0', guid);
-    this.#eventSystem.registerPluginInstance(this);
+    this.#eventSystem.registerPluginInstance(this, ['Clicked']);
     this.#storageSystem = new StorageSystemAdapter('0.5.0');
     this.#dataSourceSystem = new DataSourceSystemAdapter('0.2.0');
     this.#notificationSystem = new NotificationSystemAdapter('0.1.0', guid, pluginMeta.name);
 
-    this.#dataSourceSystemGUID = this.getGUID(
-      this.getSystem('DataSourceSystem', '0.2.0')
-    );
+    this.#dataSourceSystemGUID = this.getGUID(this.getSystem('DataSourceSystem', '0.2.0'));
 
     const { default: VueJS } = this.getDependence('Vue');
 
@@ -60,13 +57,25 @@ export class VisualizationGauge extends PanelPlugin {
       methods: {
         createNotification: (title, body, options) => {
           this.#notificationSystem.create(title, body, options);
-        }
+        },
       },
     }).$mount(selector);
 
     this.#vueComponent = view.$children[0];
+
+    this.setResizeObserver(this.#vueComponent.$el, this.#vueComponent.setPanelSize);
+
     this.#logSystem.debug(`${this.#id} initialization complete`);
     this.#logSystem.info(`${this.#id} initialization complete`);
+  }
+
+  setVueComponentPropValue(prop, value) {
+    const methodName = `set${prop.charAt(0).toUpperCase() + prop.slice(1)}`;
+    if (this.#vueComponent[methodName]) {
+      this.#vueComponent[methodName](value);
+    } else {
+      throw new Error(`В компоненте отсутствует метод ${methodName} для присвоения свойства ${prop}`);
+    }
   }
 
   setPluginConfig(config = {}) {
@@ -77,25 +86,23 @@ export class VisualizationGauge extends PanelPlugin {
 
     for (const [prop, value] of Object.entries(config)) {
       if (!configProps.includes(prop)) continue;
-
-      if (prop === 'title') this.#vueComponent.setTitle(value);
-      if (prop === 'units') this.#vueComponent.setUnits(value);
-      if (prop === 'segments') this.#vueComponent.setSegments(value);
-      if (prop === 'colValue') this.#vueComponent.setColValue(value);
-
-      if (prop === 'dataSource' && value) {
+      if (prop !== 'dataSource') {
+        this.setVueComponentPropValue(prop, value);
+      } else if (value) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
-            `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${this.#config[prop]}, status: success })`
+            `Unsubscribing ${this.#id} from DataSourceStatusUpdate({ dataSource: ${
+              this.#config[prop]
+            }, status: success })`
           );
           this.#eventSystem.unsubscribe(
             this.#dataSourceSystemGUID,
             'DataSourceStatusUpdate',
             this.#guid,
             'processDataSourceEvent',
-            { dataSource: this.#config[prop], status: 'success' },
-            );
-          }
+            { dataSource: this.#config[prop], status: 'success' }
+          );
+        }
 
         const dsNewName = value;
 
@@ -108,7 +115,7 @@ export class VisualizationGauge extends PanelPlugin {
           'DataSourceStatusUpdate',
           this.#guid,
           'processDataSourceEvent',
-          { dataSource: dsNewName, status: 'success' },
+          { dataSource: dsNewName, status: 'success' }
         );
 
         const ds = this.#dataSourceSystem.getDataSource(dsNewName);
@@ -161,13 +168,7 @@ export class VisualizationGauge extends PanelPlugin {
             required: true,
           },
         },
-        {
-          component: 'text',
-          propName: 'title',
-          attrs: {
-            label: 'Заголовок',
-          },
-        },
+        ...this.defaultFields,
         {
           component: 'text',
           propName: 'units',
@@ -193,5 +194,4 @@ export class VisualizationGauge extends PanelPlugin {
       ],
     };
   }
-
 }

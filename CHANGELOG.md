@@ -7,38 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Added
+### Added
+
+- scaling on panel resize
+- click event when clicking on the gauge segment
 - added notification if the value is outside the boundaries
+
+## Changed
+
+- version of DTCD-SDK
 
 ## [0.3.0]
 
 ## Added
+
 - logging
 - missing data message
 
 ## Changed
+
 - layout styles
 - panel config logic
 
 ## [0.2.0]
 
 ### Added
+
 - version of core systems for adapters
 
 ### Changed
+
 - build process in order to make directory name with current version of plugin
 
 ### Fixed
+
 - correct visualization display when the container size is `N x N`
 
 ## [0.1.0]
 
 ### Added
+
 - plugin init
 - plugin datasource subscribe events
 - tests init
 
 ### Changed
+
 - plugin config dumping
 - plugin datasource binding
 - plugin settings form
