@@ -1,6 +1,6 @@
 <template>
   <div ref="mainContainer" class="VisualizationGauge">
-    <div class="title" v-text="computedTitle" />
+    <div class="title" ref="title" v-text="computedTitle" />
     <div v-if="value === null" class="NoData">
       <span class="FontIcon name_infoCircleOutline Icon"></span>
        Нет данных для отображения
@@ -84,6 +84,7 @@ export default {
     },
 
     setSegments(segments = []) {
+      console.log(segments);
       this.segments = segments;
       this.render();
     },
@@ -155,7 +156,9 @@ export default {
         width -= sizeCutting;
         height -= sizeCutting;
       }
-
+      if(this.$refs.title && this.computedTitle) {
+        height -= this.$refs.title.getBoundingClientRect().height
+      }
       const translateWidth = isContainerSizesEqual ? width + sizeCutting : width;
       const translateHeight = isContainerSizesEqual ? height + sizeCutting : height;
       this.svg = d3
@@ -250,7 +253,13 @@ export default {
         .attr(this.dataAttr, '')
         .attr('class', className);
       el.attr('x', x).attr('y', y).text(text);
-      if (className === 'cur-value') el.attr('fill', this.valueColor);
+      if (className === 'cur-value') {
+        if (this.valueRange[1] >= text){
+          el.attr('fill', this.valueColor);
+        } else {
+          el.attr('fill', "#000000");
+        }
+      }
     },
   },
 };
