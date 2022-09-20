@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - if there is a title at small panel sizes, the value is out of view
 - if the value is greater than the range, the color of the value is the same as the color of the last range
 
+## [0.4.1]
+
+### Fixed
+- missing click event
+
 ## [0.4.0]
 
 ### Added
