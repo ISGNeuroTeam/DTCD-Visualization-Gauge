@@ -1,6 +1,6 @@
 {
   "name": "dtcd-visualization-gauge",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Panel with gauge visualization (speedometer)",
   "private": true,
   "homepage": "https://github.com/ISGNeuroTeam/DTCD-Visualization-Gauge",
