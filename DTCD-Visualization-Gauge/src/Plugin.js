@@ -178,7 +178,6 @@ export class VisualizationGauge extends PanelPlugin {
       if (data.length > 0 && data[0]?.metadata) {
         const metadata = eval(data[0]?.metadata)
         this.setVueComponentPropValue('segments', metadata)
-        console.log(eval(data[0]?.metadata))
         this.#config.segments = eval(data[0]?.metadata);
       }
       if (data.length > 0 && data[0]?.units) {

@@ -84,7 +84,6 @@ export default {
     },
 
     setSegments(segments = []) {
-      console.log(segments);
       this.segments = segments;
       this.render();
     },
