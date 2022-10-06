@@ -22,6 +22,7 @@ export class VisualizationGauge extends PanelPlugin {
   #vueComponent;
 
   #config = {
+    isSettingsFromDatasource: false,
     ...this.defaultConfig,
     units: '',
     colValue: 'value',
@@ -90,7 +91,9 @@ export class VisualizationGauge extends PanelPlugin {
     for (const [prop, value] of Object.entries(config)) {
       if (!configProps.includes(prop)) continue;
       if (prop !== 'dataSource') {
-        this.setVueComponentPropValue(prop, value);
+        if(!(['segments', 'title', 'units'].includes(prop) && config.isSettingsFromDatasource || prop === 'isSettingsFromDatasource')) {
+          this.setVueComponentPropValue(prop, value);
+        }
       } else if (value) {
         if (this.#config[prop]) {
           this.#logSystem.debug(
@@ -125,6 +128,24 @@ export class VisualizationGauge extends PanelPlugin {
 
         if (ds && ds.status === 'success') {
           const data = this.#storageSystem.session.getRecord(dsNewName);
+
+          if (this.#config.isSettingsFromDatasource) {
+            if (data.length > 0 && data[0]?.title) {
+              this.setVueComponentPropValue('title', data[0]?.title)
+              this.#config.title = data[0]?.title;
+            }
+            if (data.length > 0 && data[0]?.metadata) {
+              const metadata = eval(data[0]?.metadata)
+              this.setVueComponentPropValue('segments', metadata)
+              this.#config.segments = eval(data[0]?.metadata);
+            }
+            if (data.length > 0 && data[0]?.units) {
+              this.setVueComponentPropValue('units', data[0]?.units)
+              this.#config.units = data[0]?.units;
+            }
+
+          }
+
           this.loadData(data);
         }
       }
@@ -135,7 +156,7 @@ export class VisualizationGauge extends PanelPlugin {
   }
 
   getPluginConfig() {
-    return { ...this.#config, segmnets: [...this.#config.segments] };
+    return { ...this.#config };
   }
 
   loadData(data) {
@@ -148,6 +169,24 @@ export class VisualizationGauge extends PanelPlugin {
     this.#logSystem.debug(
       `${this.#id} process DataSourceStatusUpdate({ dataSource: ${dataSource}, status: ${status} })`
     );
+
+    if (this.#config.isSettingsFromDatasource) {
+      if (data.length > 0 && data[0]?.title) {
+        this.setVueComponentPropValue('title', data[0]?.title)
+        this.#config.title = data[0]?.title;
+      }
+      if (data.length > 0 && data[0]?.metadata) {
+        const metadata = eval(data[0]?.metadata)
+        this.setVueComponentPropValue('segments', metadata)
+        this.#config.segments = eval(data[0]?.metadata);
+      }
+      if (data.length > 0 && data[0]?.units) {
+        this.setVueComponentPropValue('units', data[0]?.units)
+        this.#config.units = data[0]?.units;
+      }
+
+    }
+
     this.loadData(data);
   }
 
@@ -169,6 +208,14 @@ export class VisualizationGauge extends PanelPlugin {
             label: 'Выберите источник данных',
             placeholder: 'Выберите значение',
             required: true,
+          },
+        },
+        {
+          component: 'switch',
+          propName: 'isSettingsFromDatasource',
+          attrs: {
+            label: 'Подставлять настройки из источника данных',
+            propValue: false,
           },
         },
         ...this.defaultFields,
