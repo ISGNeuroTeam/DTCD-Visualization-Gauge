@@ -246,12 +246,17 @@ export class VisualizationGauge extends PanelPlugin {
   }
 
   getState() {
-    return this.getPluginConfig();
+    return Object.assign(
+      this.getPluginConfig(),
+      { dataset: this.#vueComponent.dataset },
+    );
   }
 
   setState(newState) {
     if (typeof newState !== 'object' ) return;
 
     this.setPluginConfig(newState);
+
+    if (newState.dataset) this.#vueComponent.dataset = newState.dataset;
   }
 }
