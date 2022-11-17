@@ -260,6 +260,13 @@ export default {
         }
       }
     },
+
+    getState() {
+      const returnedState = {
+        title: this.title,
+      };
+      return returnedState;
+    },
   },
 };
 </script>
