@@ -1,3 +1,13 @@
+## [0.6.0]
+
+### Added
+
+- plugin state API
+
+### Changed
+
+- title styles
+
 ## [0.5.0]
 
 ## Added
