@@ -260,6 +260,13 @@ export default {
         }
       }
     },
+
+    getState() {
+      const returnedState = {
+        title: this.title,
+      };
+      return returnedState;
+    },
   },
 };
 </script>
@@ -292,11 +299,11 @@ export default {
 
   .title
     max-height: 60px
-    padding: 10px 16px 0
+    padding: 10px
     color: var(--text_main)
     font-size: 18px
     font-weight: 700
-    line-height: 23px
+    line-height: 1.4
     overflow: auto
 
   .svg-container
